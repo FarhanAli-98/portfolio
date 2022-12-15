@@ -1,11 +1,11 @@
 {
-    "name": "Nomixee",
-    "short_name": "Nomixe",
+    "name": "profile",
+    "short_name": "profile",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A portfolio for Nomixee. A software engineer with a breadth of experience.",
+    "description": "A new Flutter project.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
