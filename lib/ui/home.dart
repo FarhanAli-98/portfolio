@@ -426,8 +426,7 @@ class HomePage extends StatelessWidget {
         GestureDetector(
           onTap: () {
             html.window.open(
-                "https://www.linkedin.com/in/emmanuel-oladayo-48716617a/",
-                "LinkedIn");
+                "https://www.linkedin.com/in/farhan-ali-64a254209", "LinkedIn");
           },
           child: Image.network(
             Assets.linkedin,
@@ -439,7 +438,7 @@ class HomePage extends StatelessWidget {
         const SizedBox(width: 16.0),
         GestureDetector(
           onTap: () {
-            html.window.open("mailto:biomanuel97@gmail.com", "Email");
+            html.window.open("mailto:nomixe.dev@gmail.com", "Email");
           },
           child: Image.network(
             Assets.mail,
@@ -451,7 +450,7 @@ class HomePage extends StatelessWidget {
         const SizedBox(width: 16.0),
         GestureDetector(
           onTap: () {
-            html.window.open("https://github.com/Biomanuel", "Github");
+            html.window.open("https://github.com/farhanali-98", "Github");
           },
           child: Image.network(
             Assets.github,
@@ -463,7 +462,7 @@ class HomePage extends StatelessWidget {
         const SizedBox(width: 16.0),
         GestureDetector(
           onTap: () {
-            html.window.open("https://twitter.com/biomanuel97", "Twitter");
+            html.window.open("https://twitter.com/Nomixeee", "Twitter");
           },
           child: Image.network(
             Assets.twitter,

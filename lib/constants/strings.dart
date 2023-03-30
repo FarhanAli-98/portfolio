@@ -1,6 +1,5 @@
 // ignore_for_file: constant_identifier_names
 
-
 import 'package:nomixee/models/education.dart';
 
 class Strings {
@@ -13,8 +12,8 @@ class Strings {
   static const String emmanuel = 'ee';
   static const String headline =
       'I am Farhan Ali, Mobile App Developer from Lahore, Pakistan';
-  static final String summary =
-      'Focused professional having excellent technical and communication skills, and offering ${DateTime.now().year - DateTime(2020, 06, 1).year} years of experience in Computer industry. Proficient at designing and formulating test automation frameworks, writing code in various languages, feature development and implementation. Specialize in thinking outside the box to find unique solutions to difficult engineering problems.';
+  static const String summary =
+      'Innovative tech mind with 2+ years of experience working as a Flutter Application Development. Capable of working with a variety of technology and software solutions, and managing Api’s,UI Components and 3rd party Sdk’s.Valuable team member who has experience diagnosing problems and developing solutions. Extensive expertise in networking systems and working with mainframe computers.';
   static const String experience = 'Experience';
   static const String skills_i_have = 'My Stack';
   static final String rights_reserved =
@@ -44,28 +43,16 @@ class Strings {
   // Education Methods:---------------------------------------------------------
   static var workingExperienceList = [
     Education(
-      'June 2020',
-      'Sep 2020',
-      'Mobile Application Development Services (MADS) (Remote).',
-      'Flutter Internship',
-    ),
-    Education(
-      'April 2021',
-      'August 2022',
-      'Bitpiler Limited',
-      'Mobile App Developer (Contract)',
-    ),
-    Education(
-      'Oct 2021',
-      'Jan 2022',
-      'Livepetal Systems',
-      'Mobile App Developer',
-    ),
-    Education(
-      'Jan 2020',
+      'June 2022 ',
       'Present',
-      'Foresight Ridge Limited',
-      'Chief Technology Officer and Co - Founder',
+      'Software Engineer:Flutter Developer',
+      'TxLabz & IT Services and IT Consulting',
+    ),
+    Education(
+      'May 2021',
+      'June 2022',
+      'GeekLone Technology, Lahore',
+      'Flutter developer',
     ),
   ];
 }
