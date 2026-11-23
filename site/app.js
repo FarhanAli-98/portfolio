@@ -1,7 +1,17 @@
 (() => {
   const featured = ['quit-must', 'support-assistant', 'transaction-review'];
+  const spotlightProjects = [
+    { id: 'visual-inspection', style: 'inspection', image: 'assets/parcel-study.webp', label: 'Visual Inspection' },
+    { id: 'quit-must', style: 'phone', image: 'https://play-lh.googleusercontent.com/tKOaq-XE76ozQPpB2eU3GChJCXBVQeTa9KE5VT6sEgC5EwyUJOPziXbk0JfEVLeNI25ixxugxeSacR6h1blP=w600-h1000', label: 'Quit Must' },
+    { id: 'sukuk-capital', style: 'phone', image: 'https://is1-ssl.mzstatic.com/image/thumb/PurpleSource221/v4/b5/19/2a/b5192a5b-1ff7-803c-78a1-59efe08a2b94/66038ebf-d1dd-4f2e-b28a-d00ae812d82f_5_5_3.png/392x696bb.png', label: 'Sukuk Capital' },
+    { id: 'dispatch-ops', style: 'dispatch', label: 'Dispatch Desk' },
+  ];
   const categories = ['All', 'AI & Data', 'Mobile', 'Web', 'Backend', 'Design'];
-  const projects = [...(window.PORTFOLIO_PROJECTS || [])].sort((a, b) => priority(a) - priority(b));
+  const stories = window.PORTFOLIO_STORIES || {};
+  const projects = (window.PORTFOLIO_PROJECTS || []).map(project => ({
+    ...project,
+    story: stories[project.id] || { layout: 'gallery', color: '#b6d2ff', heading: 'Project overview', points: [] },
+  })).sort((a, b) => priority(a) - priority(b));
   const byId = new Map(projects.map(project => [project.id, project]));
   const pageSize = 9;
   const categoriesWithPortraits = new Set(['sukuk-capital', 'entertainment', 'quit-must', 'bespokely']);
@@ -42,13 +52,32 @@
     return node;
   }
 
+  function setTheme(node, project) {
+    node.dataset.layout = project.story.layout;
+    node.style.setProperty('--project-color', project.story.color);
+  }
+
+  function artwork(src, alt, eager = false) {
+    const image = element('img');
+    image.alt = alt;
+    image.loading = eager ? 'eager' : 'lazy';
+    image.decoding = 'async';
+    image.src = src;
+    return image;
+  }
+
   function makeMedia(project, expanded = false) {
     const tone = project.category === 'AI & Data' ? 'data' : project.category;
     const box = element('div', `media media--${tone}`);
     const fallback = () => {
       box.classList.remove('media--phone');
       box.setAttribute('aria-hidden', 'true');
-      box.innerHTML = `<svg class="media-icon" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.3">${shapes[project.category]}</svg>`;
+      const illustration = element('div', 'project-illustration');
+      illustration.innerHTML = `<svg class="media-icon" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.3">${shapes[project.category] || shapes.Design}</svg>`;
+      const stages = element('div', 'illustration-stages');
+      stages.append(...project.story.points.map(([label]) => element('span', '', label)));
+      illustration.append(stages);
+      box.replaceChildren(illustration);
     };
     if (!project.image) {
       fallback();
@@ -56,18 +85,25 @@
     }
     if (categoriesWithPortraits.has(project.id)) box.classList.add('media--phone');
     if (expanded) box.classList.add('is-expanded');
-    const img = element('img');
-    img.alt = project.alt;
-    img.loading = expanded ? 'eager' : 'lazy';
-    img.decoding = 'async';
+    const img = artwork(project.image, project.alt, expanded);
     img.addEventListener('error', fallback, { once: true });
-    img.src = project.image;
     box.append(img);
     return box;
   }
 
-  function makeCard(project, highlight = false) {
-    const card = element('article', `card${highlight ? ' featured-card reveal' : ''}`);
+  function projectAction(project) {
+    return {
+      'Published app': 'View app',
+      'Runnable demo': 'Explore demo',
+      'Design prototype': 'View prototype',
+      'Proposed concept': 'View concept',
+      'Production case study': 'Read case study',
+    }[project.status] || 'View project';
+  }
+
+  function makeCard(project) {
+    const card = element('article', 'card');
+    setTheme(card, project);
     const content = element('div', 'card-content');
     const metadata = element('p', 'card-meta', `${project.category} · ${project.status}`);
     const heading = element('h3');
@@ -76,11 +112,63 @@
     button.setAttribute('aria-haspopup', 'dialog');
     button.addEventListener('click', () => openProject(project, button));
     heading.append(button);
-    const prompt = element('span', 'card-action', 'View project');
+    const prompt = element('span', 'card-action', projectAction(project));
     prompt.setAttribute('aria-hidden', 'true');
     content.append(metadata, heading, element('p', '', project.description), prompt);
     card.append(makeMedia(project), content);
     return card;
+  }
+
+  function makeSpotlightVisual(project, item) {
+    const visual = element('div', 'spotlight-visual');
+    if (item.image) {
+      const offscreen = artwork(item.image, '', true);
+      offscreen.className = item.style === 'inspection' ? 'spotlight-photo' : 'spotlight-secondary';
+      offscreen.addEventListener('error', () => offscreen.remove(), { once: true });
+      visual.append(offscreen);
+    }
+    const main = artwork(project.image, project.alt, true);
+    main.className = 'spotlight-screen';
+    main.addEventListener('error', () => main.replaceWith(makeMedia(project)), { once: true });
+    visual.append(main);
+    return visual;
+  }
+
+  function showSpotlight() {
+    const section = document.querySelector('#project-spotlight');
+    const options = document.querySelector('#spotlight-options');
+    const panel = document.querySelector('#spotlight-panel');
+    const items = spotlightProjects.filter(item => byId.has(item.id));
+    if (!items.length) return;
+
+    function select(item, button) {
+      for (const option of options.children) option.setAttribute('aria-pressed', String(option === button));
+      const project = byId.get(item.id);
+      setTheme(panel, project);
+      panel.dataset.visual = item.style;
+      const copy = element('div', 'spotlight-copy');
+      const meta = element('p', 'card-meta', project.status);
+      const title = element('h3', '', project.title);
+      const open = element('button', 'button button-primary', projectAction(project));
+      open.type = 'button';
+      open.setAttribute('aria-haspopup', 'dialog');
+      open.addEventListener('click', () => openProject(project, open));
+      copy.append(meta, title, element('p', 'spotlight-description', project.description), open);
+      panel.replaceChildren(copy, makeSpotlightVisual(project, item));
+    }
+
+    items.forEach(item => {
+      const button = element('button', 'spotlight-option', item.label);
+      button.type = 'button';
+      button.setAttribute('aria-controls', panel.id);
+      button.addEventListener('click', () => select(item, button));
+      options.append(button);
+    });
+    select(items[0], options.firstElementChild);
+    section.hidden = false;
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(([entry]) => section.classList.toggle('in-view', entry.isIntersecting)).observe(panel);
+    }
   }
 
   function renderProjects(expand = false) {
@@ -124,11 +212,21 @@
 
   function openProject(project, trigger = null) {
     lastTrigger = trigger;
+    setTheme(dialog, project);
+    dialog.dataset.hasImage = String(Boolean(project.image));
     dialog.querySelector('#dialog-category').textContent = `${project.category} · ${project.status}`;
     dialog.querySelector('#dialog-title').textContent = project.title;
     dialog.querySelector('#dialog-description').textContent = project.description;
     dialog.querySelector('#dialog-detail').textContent = project.detail;
-    dialog.querySelector('#dialog-media').replaceChildren(...(project.image ? [makeMedia(project, true)] : []));
+    dialog.querySelector('#dialog-media').replaceChildren(makeMedia(project, true));
+    dialog.querySelector('#dialog-story-title').textContent = project.story.heading;
+    const points = project.story.points.map(([label, detail]) => {
+      const point = element('div', 'story-point');
+      point.append(element('dt', '', label), element('dd', '', detail));
+      return point;
+    });
+    dialog.querySelector('#dialog-points').replaceChildren(...points);
+    dialog.querySelector('.dialog-story').hidden = !points.length;
     dialog.querySelector('#dialog-stack').replaceChildren(...project.stack.map(item => element('li', '', item)));
     const links = project.links.map(({ label, url }, index) => {
       const link = element('a', `button ${index === 0 ? 'button-primary' : 'button-quiet'}`, label);
@@ -160,8 +258,7 @@
   });
 
   if (projects.length) {
-    const cards = featured.map(id => byId.get(id)).filter(Boolean).map(project => makeCard(project, true));
-    document.querySelector('#featured-projects').replaceChildren(...cards);
+    showSpotlight();
     for (const name of categories) {
       const button = element('button', 'filter', name);
       button.type = 'button';

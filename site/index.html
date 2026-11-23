@@ -16,11 +16,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=galaxy-orbit">
+  <link rel="stylesheet" href="styles.css?v=showcase">
   <script src="starfield.js" defer></script>
   <script src="galaxy.js?v=galaxy-detail" defer></script>
   <script src="projects.js" defer></script>
-  <script src="app.js" defer></script>
+  <script src="project-stories.js" defer></script>
+  <script src="app.js?v=showcase" defer></script>
 </head>
 <body>
   <canvas id="starfield" aria-hidden="true"></canvas>
@@ -72,21 +73,17 @@
       </div>
     </section>
 
-    <section class="focus-strip" aria-label="Areas of expertise">
-      <div class="shell focus-inner">
-        <span>AI &amp; data</span><span>iOS &amp; Android</span><span>Web products</span><span>Backend systems</span>
-      </div>
-    </section>
-
     <section class="shell section work-section" id="work" aria-labelledby="work-title">
       <div class="section-head reveal">
         <div>
-          <p class="eyebrow">Portfolio</p>
-          <h2 id="work-title">Featured AI projects<span>.</span></h2>
+          <h2 id="work-title">Selected work<span>.</span></h2>
         </div>
-        <p>See on-device AI in a published app, plus runnable demos for support retrieval and transaction review.</p>
+        <p>Look inside a photo-review prototype, two published mobile apps, and a runnable dispatch demo.</p>
       </div>
-      <div class="featured-grid" id="featured-projects"></div>
+      <div class="spotlight" id="project-spotlight" hidden>
+        <div class="spotlight-options" id="spotlight-options" role="group" aria-label="Featured projects"></div>
+        <div id="spotlight-panel" class="spotlight-panel"></div>
+      </div>
 
       <div class="library" id="project-library">
         <div class="library-head reveal">
@@ -176,12 +173,20 @@
       <button type="button" class="dialog-close" id="dialog-close" aria-label="Close project" autofocus>×</button>
     </div>
     <div class="dialog-body">
-      <h2 id="dialog-title"></h2>
-      <p id="dialog-description" class="dialog-intro"></p>
+      <header class="dialog-project-intro">
+        <h2 id="dialog-title"></h2>
+        <p id="dialog-description" class="dialog-intro"></p>
+      </header>
       <div id="dialog-media"></div>
-      <p id="dialog-detail"></p>
-      <ul class="stack" id="dialog-stack" aria-label="Technologies"></ul>
-      <div class="dialog-links" id="dialog-links"></div>
+      <section class="dialog-story" aria-labelledby="dialog-story-title">
+        <h3 id="dialog-story-title"></h3>
+        <dl id="dialog-points" class="story-points"></dl>
+      </section>
+      <div class="dialog-project-copy">
+        <p id="dialog-detail"></p>
+        <ul class="stack" id="dialog-stack" aria-label="Technologies"></ul>
+        <div class="dialog-links" id="dialog-links"></div>
+      </div>
     </div>
   </dialog>
 </body>
