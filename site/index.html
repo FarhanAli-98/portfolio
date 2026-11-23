@@ -16,9 +16,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=galaxy-3d">
+  <link rel="stylesheet" href="styles.css?v=galaxy-orbit">
   <script src="starfield.js" defer></script>
-  <script src="galaxy.js" defer></script>
+  <script src="galaxy.js?v=galaxy-orbit" defer></script>
   <script src="projects.js" defer></script>
   <script src="app.js" defer></script>
 </head>
@@ -50,6 +50,7 @@
       </div>
       <div class="galaxy-stage">
         <canvas id="galaxy-canvas" aria-hidden="true"></canvas>
+        <canvas id="galaxy-canvas-fallback" aria-hidden="true"></canvas>
         <div class="galaxy-controls">
           <span id="galaxy-instruction">Drag to orbit</span>
           <button type="button" id="galaxy-view" aria-describedby="galaxy-instruction" hidden>

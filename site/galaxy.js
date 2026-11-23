@@ -2,18 +2,19 @@
   const hero = document.querySelector('.hero');
   const stage = document.querySelector('.galaxy-stage');
   const canvas = document.querySelector('#galaxy-canvas');
+  const fallback = document.querySelector('#galaxy-canvas-fallback');
   const viewButton = document.querySelector('#galaxy-view');
   const root = document.documentElement;
   const dialog = document.querySelector('#project-dialog');
-  if (!hero || !stage || !canvas || !viewButton) return;
+  if (!hero || !stage || !canvas || !fallback || !viewButton) return;
 
   const vertex = `
     attribute vec4 aOrbit;
     attribute vec4 aColor;
     attribute vec2 aStyle;
     uniform float uTime, uAspect, uPitch, uYaw, uRoll, uPixel, uFocal, uPointLimit;
-    varying vec3 vColor;
-    varying float vAlpha, vKind, vSize;
+    varying mediump vec3 vColor;
+    varying mediump float vAlpha, vKind, vSize;
 
     vec2 rotate(vec2 v, float a) {
       float c = cos(a), s = sin(a);
@@ -45,8 +46,8 @@
 
   const fragment = `
     precision mediump float;
-    varying vec3 vColor;
-    varying float vAlpha, vKind, vSize;
+    varying mediump vec3 vColor;
+    varying mediump float vAlpha, vKind, vSize;
 
     void main() {
       vec2 p = 2.0*gl_PointCoord-1.0;
@@ -81,7 +82,7 @@
   const aim = { ...views[0] };
   const camera = { ...aim };
 
-  function particles(compact) {
+  function particles(compact, fallbackMode = false) {
     let state = 18617;
     const random = () => {
       state = (Math.imul(state, 1664525) + 1013904223) >>> 0;
@@ -114,15 +115,16 @@
     };
 
     // Broad nebula sprites establish the two spiral arms and luminous bulge.
-    for (let i = 0; i < (compact ? 2300 : 4400); i++) armParticle(true, i);
-    for (let i = 0; i < (compact ? 520 : 900); i++) {
+    const counts = fallbackMode ? [1450, 240, 6500, 1200] : compact ? [2300, 440, 17500, 3500] : [4400, 680, 38000, 6900];
+    for (let i = 0; i < counts[0]; i++) armParticle(true, i);
+    for (let i = 0; i < counts[1]; i++) {
       const radius = 1.0 * Math.pow(random(), 1.5);
       add(radius, fullCircle * random(), scatter()*.23*(1-radius), 20 + 84*random(),
-        colorAt(radius*.45, random()*.26), (.036+.075*random()) * (1-radius*.68), 1);
+        colorAt(radius*.45, random()*.26), (.031+.065*random()) * (1-radius*.68), 1);
     }
     // Small points keep the arms detailed as the camera changes angle.
-    for (let i = 0; i < (compact ? 17500 : 38000); i++) armParticle(false, i);
-    for (let i = 0; i < (compact ? 3500 : 6900); i++) {
+    for (let i = 0; i < counts[2]; i++) armParticle(false, i);
+    for (let i = 0; i < counts[3]; i++) {
       const radius = 3.55 * Math.pow(random(), .75);
       add(radius, fullCircle*random(), scatter()*(.09 + .055*radius), .74+random()*.85,
         colorAt(radius, scatter()*.65), .04+random()*.27*(1-radius/3.55), 0);
@@ -140,7 +142,7 @@
       const height = [ .25, -.36, .18 ][orbit];
       const phase = fullCircle * orbit / 3 + .6;
       for (let i = 0; i < 270; i++) {
-        add(radius, i*fullCircle/270, height, .8, orbitColors[orbit], .155, 2, rate);
+        add(radius, i*fullCircle/270, height, 1.05, orbitColors[orbit], .25, 2, rate);
       }
       for (let i = 28; i >= 0; i--) {
         add(radius, phase - Math.sign(rate)*i*.012, height, i === 0 ? 10 : 3.1-i*.071,
@@ -193,20 +195,89 @@
     gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     gl.clearColor(0, 0, 0, 0);
     gl.uniform1f(uniforms.uPointLimit, Math.min(170, gl.getParameter(gl.ALIASED_POINT_SIZE_RANGE)[1]));
-    return { gl, uniforms, count: points.length / 10, compact };
+    return { gl, uniforms, count: points.length / 10, compact, canvas };
+  }
+
+  function openCanvas() {
+    const context = fallback.getContext('2d', { alpha: true });
+    if (!context) return;
+    const sprites = new Map();
+    const values = particles(true, true);
+    const points = [];
+    for (let i = 0; i < values.length; i += 10) {
+      const [r, angle, height, size, red, green, blue, alpha, kind, rate] = values.subarray(i, i+10);
+      const levels = [red, green, blue].map(channel => Math.round(channel*9));
+      const rgb = levels.map(channel => Math.round(channel*255/9)).join(',');
+      let sprite;
+      if (kind === 1 || size > 2.3) {
+        if (!sprites.has(rgb)) {
+          const texture = document.createElement('canvas');
+          texture.width = texture.height = 42;
+          const painter = texture.getContext('2d');
+          const gradient = painter.createRadialGradient(21,21,0,21,21,21);
+          gradient.addColorStop(0, 'rgba('+rgb+',1)');
+          gradient.addColorStop(.31, 'rgba('+rgb+',.56)');
+          gradient.addColorStop(.67, 'rgba('+rgb+',.14)');
+          gradient.addColorStop(1, 'rgba('+rgb+',0)');
+          painter.fillStyle = gradient;
+          painter.fillRect(0,0,42,42);
+          sprites.set(rgb, texture);
+        }
+        sprite = sprites.get(rgb);
+      }
+      points.push({ r, angle, height, size, rgb: 'rgb('+rgb+')', alpha, kind, rate, sprite });
+    }
+    return { context, points, compact: true, canvas: fallback };
+  }
+
+  function paintCanvas(pitch, roll) {
+    const { context, points } = graphics;
+    const halfWidth = rectWidth/2, halfHeight = rectHeight/2;
+    const scale = Math.min(2.64, 2.48 * rectWidth / rectHeight)*halfHeight;
+    const unit = rectHeight/675;
+    const cp=Math.cos(pitch), sp=Math.sin(pitch), cr=Math.cos(roll), sr=Math.sin(roll);
+    context.clearRect(0,0,rectWidth,rectHeight);
+    context.globalCompositeOperation = 'lighter';
+    for (const p of points) {
+      const spin = p.kind === 2 ? time*p.rate : time*.122 + Math.sin(time*.31+p.r*1.7)*.09;
+      const theta = p.angle + spin + camera.yaw;
+      const x = Math.cos(theta)*p.r;
+      const z = Math.sin(theta)*p.r;
+      const y = cp*p.height - sp*z;
+      const depth = 6.4 - sp*p.height - cp*z;
+      const dx = (cr*x-sr*y)*scale/depth+halfWidth;
+      const dy = halfHeight-(sr*x+cr*y)*scale/depth;
+      const size = Math.max(1, p.size*unit*6.4/depth*(p.kind===1 ? 1.44 : 1));
+      const radius = size*.5;
+      if (dx+radius<0 || dx-radius>rectWidth || dy+radius<0 || dy-radius>rectHeight) continue;
+      context.globalAlpha = Math.min(1, p.alpha * (p.kind === 1 ? 1.74 : .84));
+      if (p.sprite) {
+        context.drawImage(p.sprite, dx-radius, dy-radius, size, size);
+      } else {
+        context.fillStyle = p.rgb;
+        context.fillRect(dx-radius, dy-radius, size, size);
+      }
+    }
+    context.globalAlpha = 1;
   }
 
   function paint(moving) {
     if (!graphics) return;
+    const pitch = camera.pitch + (moving ? .084*Math.sin(time*.37) : 0);
+    const roll = camera.roll + (moving ? .043*Math.sin(time*.29) : 0);
+    if (graphics.context) {
+      paintCanvas(pitch, roll);
+      return;
+    }
     const { gl, uniforms, count } = graphics;
     const float = (name, value) => gl.uniform1f(uniforms[name], value);
     float('uTime', time);
     float('uAspect', rectWidth / rectHeight);
-    float('uPitch', camera.pitch + (moving ? .084*Math.sin(time*.37) : 0));
+    float('uPitch', pitch);
     float('uYaw', camera.yaw);
-    float('uRoll', camera.roll + (moving ? .043*Math.sin(time*.29) : 0));
+    float('uRoll', roll);
     float('uPixel', pixelRatio * rectHeight / 675);
-    float('uFocal', Math.min(2.94, 2.55 * rectWidth / rectHeight));
+    float('uFocal', Math.min(2.66, 2.48 * rectWidth / rectHeight));
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.drawArrays(gl.POINTS, 0, count);
   }
@@ -218,9 +289,11 @@
     if (!graphics) return;
     const cap = graphics.compact ? 960000 : 1450000;
     pixelRatio = Math.min(window.devicePixelRatio || 1, graphics.compact ? 1.24 : 1.55, Math.sqrt(cap / (rectWidth*rectHeight)));
-    canvas.width = Math.round(rectWidth*pixelRatio);
-    canvas.height = Math.round(rectHeight*pixelRatio);
-    graphics.gl.viewport(0, 0, canvas.width, canvas.height);
+    const surface = graphics.canvas;
+    surface.width = Math.round(rectWidth*pixelRatio);
+    surface.height = Math.round(rectHeight*pixelRatio);
+    if (graphics.gl) graphics.gl.viewport(0, 0, surface.width, surface.height);
+    else graphics.context.setTransform(surface.width/rectWidth,0,0,surface.height/rectHeight,0,0);
   }
 
   function canAnimate() {
@@ -230,7 +303,7 @@
   function tick(now) {
     frame = 0;
     if (!canAnimate()) return;
-    const interval = graphics.compact ? 31 : 23;
+    const interval = graphics.context ? 39 : graphics.compact ? 31 : 23;
     const span = lastTick === null ? interval : now-lastTick;
     if (span >= interval) {
       lastTick = now;
@@ -261,21 +334,28 @@
     sync();
   }
 
-  function changeView(event) {
+  function changeView() {
     view = (view+1)%views.length;
     Object.assign(aim, views[view]);
     const labels = ['wide view', 'face-on view', 'low-angle view'];
-    viewButton.setAttribute('aria-label', 'Change galaxy view, ' + labels[view]);
+    viewButton.setAttribute('aria-label', 'Change view, ' + labels[view]);
     updateView();
   }
 
-  function begin() {
+  function begin(useFallback = false) {
     try {
-      graphics = openGraphics();
+      graphics = useFallback ? null : openGraphics();
     } catch {
+      graphics = null;
+    }
+    if (!graphics) graphics = openCanvas();
+    if (!graphics) {
+      hero.classList.remove('has-galaxy');
+      viewButton.hidden = true;
+      sync();
       return;
     }
-    if (!graphics) return;
+    stage.dataset.renderer = graphics.gl ? 'webgl' : 'canvas';
     resize();
     paint(false);
     hero.classList.add('has-galaxy');
@@ -285,26 +365,23 @@
 
   canvas.addEventListener('webglcontextlost', event => {
     event.preventDefault();
-    graphics = null;
-    hero.classList.remove('has-galaxy');
-    viewButton.hidden = true;
-    sync();
+    begin(true);
   });
-  canvas.addEventListener('webglcontextrestored', begin);
+  canvas.addEventListener('webglcontextrestored', () => begin());
   viewButton.addEventListener('click', changeView);
-  canvas.addEventListener('pointerdown', event => {
-    if (!graphics || event.button !== 0 || !event.isPrimary) return;
+  stage.addEventListener('pointerdown', event => {
+    if (event.target !== graphics?.canvas || event.button !== 0 || !event.isPrimary) return;
     drag = { id: event.pointerId, x: event.clientX, y: event.clientY, pitch: aim.pitch, yaw: aim.yaw };
-    canvas.setPointerCapture(event.pointerId);
+    event.target.setPointerCapture(event.pointerId);
     stage.classList.add('is-orbiting');
   });
-  canvas.addEventListener('pointermove', event => {
+  stage.addEventListener('pointermove', event => {
     if (!drag || drag.id !== event.pointerId) return;
     aim.yaw = drag.yaw + (event.clientX-drag.x)*.009;
     aim.pitch = clamp(drag.pitch + (event.clientY-drag.y)*.0068, .16, 1.45);
     updateView();
   });
-  canvas.addEventListener('lostpointercapture', () => {
+  stage.addEventListener('lostpointercapture', () => {
     drag = null;
     stage.classList.remove('is-orbiting');
   });
