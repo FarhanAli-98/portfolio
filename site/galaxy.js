@@ -110,7 +110,8 @@
       const height = scatter() * (.033 + radius * .038);
       const visibleTail = .35 + .65 * (1 - Math.pow(radius / 3.45, 2));
       const size = gas ? 17 + 78 * Math.pow(random(), 2.2) : .75 + 2.3 * Math.pow(random(), 3.8);
-      const lum = gas ? (.014 + random()*.043) * knot : (.23+random()*.49);
+      const centerFade = .45+.55*Math.min(radius, 1);
+      const lum = gas ? (.014 + random()*.043) * knot * centerFade : (.23+random()*.49);
       add(radius, angle, height, size, colorAt(radius, scatter()*.38 + (gas ? -.11 : 0)), lum * visibleTail, gas ? 1 : 0);
     };
 
@@ -119,9 +120,12 @@
     for (let i = 0; i < counts[0]; i++) armParticle(true, i);
     for (let i = 0; i < counts[1]; i++) {
       const radius = 1.0 * Math.pow(random(), 1.5);
-      add(radius, fullCircle * random(), scatter()*.23*(1-radius), 20 + 84*random(),
-        colorAt(radius*.45, random()*.26), (.031+.065*random()) * (1-radius*.68), 1);
+      add(radius, fullCircle * random(), scatter()*.23*(1-radius), 18 + 61*random(),
+        colorAt(radius*.45, random()*.26), (.017+.041*random()) * (1-radius*.68), 1);
     }
+    add(0, 0, 0, 130, [1,.60,.38], .17, 1);
+    add(0, 0, 0, 46, [1,.87,.69], .34, 1);
+    add(0, 0, 0, 12, [1,.97,.87], .94, 0);
     // Small points keep the arms detailed as the camera changes angle.
     for (let i = 0; i < counts[2]; i++) armParticle(false, i);
     for (let i = 0; i < counts[3]; i++) {
