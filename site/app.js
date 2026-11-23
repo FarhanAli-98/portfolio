@@ -101,6 +101,14 @@
     }[project.status] || 'View project';
   }
 
+  function externalLink(label, url, emphasis) {
+    const link = element('a', `button ${emphasis ? 'button-primary' : 'button-quiet'}`, label);
+    link.href = url;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    return link;
+  }
+
   function makeCard(project) {
     const card = element('article', 'card');
     setTheme(card, project);
@@ -153,7 +161,11 @@
       open.type = 'button';
       open.setAttribute('aria-haspopup', 'dialog');
       open.addEventListener('click', () => openProject(project, open));
-      copy.append(meta, title, element('p', 'spotlight-description', project.description), open);
+      const actions = element('div', 'spotlight-actions');
+      const source = project.links.find(link => link.label === 'Source & setup');
+      actions.append(open);
+      if (source) actions.append(externalLink('View source', source.url, false));
+      copy.append(meta, title, element('p', 'spotlight-description', project.description), actions);
       panel.replaceChildren(copy, makeSpotlightVisual(project, item));
     }
 
@@ -228,13 +240,7 @@
     dialog.querySelector('#dialog-points').replaceChildren(...points);
     dialog.querySelector('.dialog-story').hidden = !points.length;
     dialog.querySelector('#dialog-stack').replaceChildren(...project.stack.map(item => element('li', '', item)));
-    const links = project.links.map(({ label, url }, index) => {
-      const link = element('a', `button ${index === 0 ? 'button-primary' : 'button-quiet'}`, label);
-      link.href = url;
-      link.target = '_blank';
-      link.rel = 'noopener noreferrer';
-      return link;
-    });
+    const links = project.links.map(({ label, url }, index) => externalLink(label, url, index === 0));
     dialog.querySelector('#dialog-links').replaceChildren(...links);
     setProjectUrl(project.id);
     dialog.showModal();

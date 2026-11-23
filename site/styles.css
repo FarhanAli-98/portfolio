@@ -440,7 +440,8 @@ html[data-motion="paused"] .card:hover, html[data-motion="paused"] .button:hover
   letter-spacing: -.075em; margin: .66rem 0 1.05rem; font-weight: 600;
 }
 .spotlight-description { color: var(--muted); max-width: 35ch; }
-.spotlight-copy .button { margin-top: 1.3rem; background: var(--project-color); box-shadow: none; }
+.spotlight-actions { display: flex; gap: .6rem; flex-wrap: wrap; margin-top: 1.3rem; }
+.spotlight-actions .button-primary { background: var(--project-color); box-shadow: none; }
 .spotlight-visual {
   position: relative; min-width: 0; isolation: isolate; overflow: hidden;
   background:

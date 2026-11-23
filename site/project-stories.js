@@ -106,8 +106,8 @@
     ]),
     'visual-inspection': story('review', '#efbe91', 'Inside the review screen', [
       ['Photo evidence', 'Inspect an illustrative parcel and the marked corner damage.'],
-      ['Coverage', 'The sample case shows whether the required camera views are attached.'],
-      ['Decision', 'A reviewer confirms or corrects the observation.'],
+      ['Coverage', 'Upload front, top, and back photos and see which recommended views are missing.'],
+      ['Decision', 'Record a reviewer decision and see it persist across restarts.'],
     ]),
     'incident-triage': story('workflow', '#c4a6ff', 'Reconstruct the incident', [
       ['Deploy', 'See when the fictional checkout service release occurred.'],
